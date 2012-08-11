@@ -28,15 +28,13 @@
 #include <mach/regs-gpio.h>
 #include <mach/gpio.h>
 
-#include "herring.h"
-
 /* clock sources for the mmc bus clock, order as for the ctrl2[5..4] */
 
 char *s5pv210_hsmmc_clksrcs[4] = {
 	[0] = "hsmmc",		/* HCLK */
-	/* [1] = "hsmmc",	- duplicate HCLK entry */
+	[1] = "hsmmc",		/* duplicate HCLK entry */
 	[2] = "sclk_mmc",	/* mmc_bus */
-	/* [3] = NULL,		- reserved */
+	[3] = NULL,			/* reserved */
 };
 
 #define S3C_SDHCI_CTRL3_FCSELTX_INVERT  (0)
@@ -82,8 +80,7 @@ void s5pv210_setup_sdhci_cfg_card(struct platform_device *dev,
 		if ((ios->clock > range_start) && (ios->clock < range_end))
 			ctrl3 = S3C_SDHCI_CTRL3_FCSELTX_BASIC |
 				S3C_SDHCI_CTRL3_FCSELRX_BASIC;
-		else if (machine_is_herring() && herring_is_cdma_wimax_dev() &&
-								dev->id == 2) {
+		else if (dev->id == 1 || dev->id == 3) {
 			ctrl3 = S3C_SDHCI_CTRL3_FCSELTX_BASIC;
 			//if(card->type & MMC_TYPE_SDIO)
 				ctrl3 |= S3C_SDHCI_CTRL3_FCSELRX_BASIC;
@@ -156,6 +153,10 @@ static struct s3c_sdhci_platdata hsmmc0_platdata = {
 #endif
 };
 
+#if defined(CONFIG_S3C_DEV_HSMMC1)
+static struct s3c_sdhci_platdata hsmmc1_platdata = { 0 };
+#endif
+
 #if defined(CONFIG_S3C_DEV_HSMMC2)
 static struct s3c_sdhci_platdata hsmmc2_platdata = {
 #if defined(CONFIG_S5PV210_SD_CH2_8BIT)
@@ -169,95 +170,35 @@ static struct s3c_sdhci_platdata hsmmc2_platdata = {
 static struct s3c_sdhci_platdata hsmmc3_platdata = { 0 };
 #endif
 
-static DEFINE_MUTEX(notify_lock);
-
-#define DEFINE_MMC_CARD_NOTIFIER(num) \
-static void (*hsmmc##num##_notify_func)(struct platform_device *, int state); \
-static int ext_cd_init_hsmmc##num(void (*notify_func)( \
-					struct platform_device *, int state)) \
-{ \
-	mutex_lock(&notify_lock); \
-	WARN_ON(hsmmc##num##_notify_func); \
-	hsmmc##num##_notify_func = notify_func; \
-	mutex_unlock(&notify_lock); \
-	return 0; \
-} \
-static int ext_cd_cleanup_hsmmc##num(void (*notify_func)( \
-					struct platform_device *, int state)) \
-{ \
-	mutex_lock(&notify_lock); \
-	WARN_ON(hsmmc##num##_notify_func != notify_func); \
-	hsmmc##num##_notify_func = NULL; \
-	mutex_unlock(&notify_lock); \
-	return 0; \
-}
-
-#ifdef CONFIG_S3C_DEV_HSMMC2
-DEFINE_MMC_CARD_NOTIFIER(2)
-#endif
-#ifdef CONFIG_S3C_DEV_HSMMC3
-DEFINE_MMC_CARD_NOTIFIER(3)
-#endif
-
 /*
  * call this when you need sd stack to recognize insertion or removal of card
  * that can't be told by SDHCI regs
  */
 void sdhci_s3c_force_presence_change(struct platform_device *pdev)
 {
-	void (*notify_func)(struct platform_device *, int state) = NULL;
-	mutex_lock(&notify_lock);
-#ifdef CONFIG_S3C_DEV_HSMMC2
-	if (pdev == &s3c_device_hsmmc2)
-		notify_func = hsmmc2_notify_func;
-#endif
-#ifdef CONFIG_S3C_DEV_HSMMC3
-	if (pdev == &s3c_device_hsmmc3)
-		notify_func = hsmmc3_notify_func;
-#endif
-
-	if (notify_func)
-		notify_func(pdev, 1);
-	else
-		pr_warn("%s: called for device with no notifier\n", __func__);
-	mutex_unlock(&notify_lock);
+	pr_warn("%s: called for device with no notifier\n", __func__);
 }
 EXPORT_SYMBOL_GPL(sdhci_s3c_force_presence_change);
 
 void s3c_sdhci_set_platdata(void)
 {
 #if defined(CONFIG_S3C_DEV_HSMMC)
-	if (machine_is_herring()) { /* TODO: move to mach-herring.c */
-		hsmmc0_platdata.cd_type = S3C_SDHCI_CD_PERMANENT;
-	}
+    // namko: MID: Internal SD
+	hsmmc0_platdata.cd_type = S3C_SDHCI_CD_PERMANENT;
 	s3c_sdhci0_set_platdata(&hsmmc0_platdata);
 #endif
+#if defined(CONFIG_S3C_DEV_HSMMC1)
+    // namko: MID: Atheros WiFi
+	hsmmc1_platdata.cd_type = S3C_SDHCI_CD_PERMANENT;
+	s3c_sdhci1_set_platdata(&hsmmc1_platdata);
+#endif
 #if defined(CONFIG_S3C_DEV_HSMMC2)
-	if (machine_is_herring()) {
-		if (herring_is_cdma_wimax_dev()) {
-			hsmmc2_platdata.cd_type = S3C_SDHCI_CD_EXTERNAL;
-			hsmmc2_platdata.ext_cd_init = ext_cd_init_hsmmc2;
-			hsmmc2_platdata.ext_cd_cleanup = ext_cd_cleanup_hsmmc2;
-			hsmmc2_platdata.built_in = 1;
-			hsmmc2_platdata.must_maintain_clock = 1;
-			hsmmc2_platdata.enable_intr_on_resume = 1;
-		} else {
-			hsmmc2_platdata.cd_type = S3C_SDHCI_CD_GPIO;
-			hsmmc2_platdata.ext_cd_gpio = S5PV210_GPH3(4);
-			hsmmc2_platdata.ext_cd_gpio_invert = true;
-			universal_sdhci2_cfg_ext_cd();
-		}
-	}
-
+    // namko: MID: External SD
 	s3c_sdhci2_set_platdata(&hsmmc2_platdata);
 #endif
 #if defined(CONFIG_S3C_DEV_HSMMC3)
-	if (machine_is_herring()) {
-		hsmmc3_platdata.cd_type = S3C_SDHCI_CD_EXTERNAL;
-		hsmmc3_platdata.ext_cd_init = ext_cd_init_hsmmc3;
-		hsmmc3_platdata.ext_cd_cleanup = ext_cd_cleanup_hsmmc3;
-		hsmmc3_platdata.built_in = 1;
-	}
+    // namko: MID: Broadcom WiFi
+	hsmmc3_platdata.cd_type = S3C_SDHCI_CD_PERMANENT;
 	s3c_sdhci3_set_platdata(&hsmmc3_platdata);
 #endif
 };

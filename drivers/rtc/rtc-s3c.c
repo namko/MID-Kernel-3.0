@@ -227,8 +227,7 @@ static int s3c_rtc_settime(struct device *dev, struct rtc_time *tm)
 #endif
 	s3c_rtc_enable(dev, 0);
 
-/* hcj for dbg */
-/*	max8998_rtc_set_time_hack(tm);*/
+	max8998_rtc_set_time_hack(tm);
 
 	return 0;
 }
@@ -600,8 +599,7 @@ static int __devinit s3c_rtc_probe(struct platform_device *pdev)
 
 
 	s3c_rtc_cpu_type = platform_get_device_id(pdev)->driver_data;
-/* hcj for dbg */
-/*	max8998_rtc_read_time_hack(&tm);*/
+	max8998_rtc_read_time_hack(&tm);
 
 	/* update time from pmic */
 

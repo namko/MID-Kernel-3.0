@@ -744,6 +744,24 @@ config TOUCHSCREEN_TPS6507X
 	  To compile this driver as a module, choose M here: the
 	  module will be called tps6507x_ts.
 
+config TOUCHSCREEN_FT5406
+	bool "FocalTech ft5406 touchscreen driver"
+	default y
+	help
+	  Say Y here to enable the driver for the FocalTech ft5406 touchscreen 
+	  (used in Herotab C8, Dropad A8[T], Haipad M7[S], iBall Slide and compatibles).
+
+	  This 5-point multi-touch driver is based on Violet's implementation
+	  with addition of early suspend\resume functionality.
+
+config TOUCHSCREEN_FT5406_GB
+          bool "Android 2.3 (and older) compatibility"
+          depends on TOUCHSCREEN_FT5406
+          default n
+          help
+              Select Y to enable compatibility with Android 2.3 (and older). Newer
+              versions introduce changes that break GB and older drivers.
+
 config TOUCHSCREEN_GOODIX
         tristate "GOODIX based touchscreen"
         depends on I2C

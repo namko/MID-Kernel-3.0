@@ -33,8 +33,11 @@ obj-$(CONFIG_MACH_HERRING)	+= herring-btlpm.o
 obj-$(CONFIG_MACH_HERRING)	+= herring-watchdog.o
 obj-$(CONFIG_MACH_HERRING)	+= herring-panel.o
 obj-$(CONFIG_MACH_HERRING)	+= herring-touchkey-led.o
-
 obj-$(CONFIG_MACH_HERRING)	+= dev-herring-phone.o
+obj-$(CONFIG_MACH_MID)		+= mach-mid.o
+obj-$(CONFIG_MACH_MID)		+= mid-cfg.o
+obj-$(CONFIG_MACH_MID)		+= mid-gpio.o
+obj-$(CONFIG_MACH_MID)		+= smdkc110-rtc.o
 
 # device support
 

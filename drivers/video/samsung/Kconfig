@@ -100,6 +100,12 @@ config FB_S3C_HT101HD1
 	depends on MACH_SMDKV210
 	---help---
 	  This enables support for HT101HD1 WXVGA(1366*768) LCD panel
+
+config FB_S3C_MID_MULTI
+	bool "Multi-display"
+	depends on MACH_MID
+	---help---
+	  This enables support for multiple MID LCD panels (7.0\", 8.0\", 10.1\")
 endchoice
 
 config FB_S3C_TL2796

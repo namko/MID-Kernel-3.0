@@ -64,7 +64,8 @@
 #define ADC_MINOR	131
 #define ADC_INPUT_PIN	_IOW('S', 0x0c, unsigned long)
 
-#define ADC_WITH_TOUCHSCREEN
+// namko: For now, assumed no resistive touchscreen.
+//#define ADC_WITH_TOUCHSCREEN
 
 static struct clk	*adc_clock;
 
@@ -140,8 +141,6 @@ int s3c_adc_get_adc_data(int channel)
 #ifdef ADC_WITH_TOUCHSCREEN
 	mutex_lock(&adc_mutex);
 	s3c_adc_save_SFR_on_ADC();
-#else
-	mutex_lock(&adc_mutex);
 #endif
 
 	cur_adc_port = adc_port;
@@ -153,8 +152,6 @@ int s3c_adc_get_adc_data(int channel)
 
 #ifdef ADC_WITH_TOUCHSCREEN
 	s3c_adc_restore_SFR_on_ADC();
-	mutex_unlock(&adc_mutex);
-#else
 	mutex_unlock(&adc_mutex);
 #endif
 

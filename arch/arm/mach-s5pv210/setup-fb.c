@@ -121,7 +121,7 @@ void s3cfb_get_clk_name(char *clk_name)
 {
 	strcpy(clk_name, "sclk_fimd");
 }
-#if RITESH
+
 #ifdef CONFIG_FB_S3C_LTE480WV
 int s3cfb_backlight_onoff(struct platform_device *pdev, int onoff)
 {
@@ -146,7 +146,7 @@ int s3cfb_backlight_onoff(struct platform_device *pdev, int onoff)
 	gpio_free(S5PV210_GPD0(3));
 	return 0;
 }
-#endif
+
 int s3cfb_reset_lcd(struct platform_device *pdev)
 {
 	int err;

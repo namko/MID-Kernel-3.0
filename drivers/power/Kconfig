@@ -191,6 +191,13 @@ config BATTERY_S5PC110
 	help
 	  Say Y to enable support for batteries with s5pc110 chip.	  
 
+config BATTERY_MID
+	bool "Battery driver for MID-based tablets"
+	depends on MACH_MID
+	help
+	  Say Y to enable support for batteries with MID 703, MID x024,
+	  MID 712 and compatibles.
+
 config CHARGER_PCF50633
 	tristate "NXP PCF50633 MBC"
 	depends on MFD_PCF50633

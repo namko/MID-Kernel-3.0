@@ -274,6 +274,18 @@ config WIFI_CONTROL_FUNC
 	help
 	  Enables Power/Reset/Carddetect function abstraction
 
+config AR600X_STUB
+	bool "Atheros AR600X family driver module support"
+	select WIRELESS_EXT
+	select WEXT_PRIV
+	select WEXT_SPY
+	select LIB80211
+	select CRC_CCITT
+	select FW_LOADER
+	---help---
+	  This entry supports possible prerequisites for AR600X family of wireless
+	  cards.
+
 source "drivers/net/wireless/ath/Kconfig"
 source "drivers/net/wireless/b43/Kconfig"
 source "drivers/net/wireless/b43legacy/Kconfig"

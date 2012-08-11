@@ -927,7 +927,6 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 	}
 	fbdev->dev = &pdev->dev;
 	
-#if RITESH
 	fbdev->regulator = regulator_get(&pdev->dev, "pd");
 	if (!fbdev->regulator) {
 		dev_err(fbdev->dev, "failed to get regulator\n");
@@ -941,6 +940,7 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 		goto err_regulator;
 	}
 
+#ifndef CONFIG_MACH_MID
 	fbdev->vcc_lcd = regulator_get(&pdev->dev, "vcc_lcd");
 	if (!fbdev->vcc_lcd) {
 		dev_err(fbdev->dev, "failed to get vcc_lcd\n");
@@ -1032,10 +1032,10 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 	}
     
 #ifdef CONFIG_FB_S3C_LCD_INIT
-//#if defined(CONFIG_FB_S3C_TL2796)
+#if defined(CONFIG_FB_S3C_TL2796)
 	if (pdata->backlight_on)
 		pdata->backlight_on(pdev);
-//#endif
+#endif
 	if (!bootloaderfb && pdata->reset_lcd)
 		pdata->reset_lcd(pdev);
 #endif
@@ -1082,12 +1082,14 @@ err_io:
 	pdata->clk_off(pdev, &fbdev->clock);
 
 err_pdata:
+#ifndef CONFIG_MACH_MID
 	regulator_disable(fbdev->vlcd);
 
 err_vlcd:
 	regulator_disable(fbdev->vcc_lcd);
 
 err_vcc_lcd:
+#endif
 	regulator_disable(fbdev->regulator);
 
 err_regulator:
@@ -1149,16 +1151,24 @@ void s3cfb_early_suspend(struct early_suspend *h)
 {
 	struct s3cfb_global *fbdev =
 		container_of(h, struct s3cfb_global, early_suspend);
+	struct s3c_platform_fb *pdata = to_fb_plat(fbdev->dev);
+	struct platform_device *pdev = to_platform_device(fbdev->dev);
 
 	pr_debug("s3cfb_early_suspend is called\n");
+
+    // namko: Turn off the backlight; not the regulator.
+	if (pdata->backlight_onoff)
+		pdata->backlight_onoff(pdev, 0);
 
 	s3cfb_display_off(fbdev);
 	clk_disable(fbdev->clock);
 #if defined(CONFIG_FB_S3C_TL2796)
 	lcd_cfg_gpio_early_suspend();
 #endif
+#ifndef CONFIG_MACH_MID
 	regulator_disable(fbdev->vlcd);
 	regulator_disable(fbdev->vcc_lcd);
+#endif
 	regulator_disable(fbdev->regulator);
 
 	return ;
@@ -1180,6 +1190,7 @@ void s3cfb_late_resume(struct early_suspend *h)
 	if (ret < 0)
 		dev_err(fbdev->dev, "failed to enable regulator\n");
 
+#ifndef CONFIG_MACH_MID
 	ret = regulator_enable(fbdev->vcc_lcd);
 	if (ret < 0)
 		dev_err(fbdev->dev, "failed to enable vcc_lcd\n");
@@ -1187,6 +1198,7 @@ void s3cfb_late_resume(struct early_suspend *h)
 	ret = regulator_enable(fbdev->vlcd);
 	if (ret < 0)
 		dev_err(fbdev->dev, "failed to enable vlcd\n");
+#endif
 
 #if defined(CONFIG_FB_S3C_TL2796)
 	lcd_cfg_gpio_late_resume();
@@ -1214,10 +1226,11 @@ void s3cfb_late_resume(struct early_suspend *h)
 
 	s3cfb_set_vsync_interrupt(fbdev, 1);
 	s3cfb_set_global_interrupt(fbdev, 1);
-
+#ifndef CONFIG_MACH_MID
+    // namko: Reset turns on the backlight, no need to call this.
 	if (pdata->backlight_on)
 		pdata->backlight_on(pdev);
-
+#endif
 	if (pdata->reset_lcd)
 		pdata->reset_lcd(pdev);
 

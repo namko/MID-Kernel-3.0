@@ -112,15 +112,21 @@ static struct usb_device_id btusb_table[] = {
 	/* Foxconn - Hon Hai */
 	{ USB_DEVICE(0x0489, 0xe033) },
 
+    // namko: The following entries moved from blacklist table seem to
+    // fix Bluetooth:
+	/* CSR BlueCore devices */
+	{ USB_DEVICE(0x0a12, 0x0001) },
+
+	/* Broadcom BCM2045 */
+	{ USB_DEVICE(0x0a5c, 0x2039) },
+	{ USB_DEVICE(0x0a5c, 0x2101) },
+
 	{ }	/* Terminating entry */
 };
 
 MODULE_DEVICE_TABLE(usb, btusb_table);
 
 static struct usb_device_id blacklist_table[] = {
-	/* CSR BlueCore devices */
-	{ USB_DEVICE(0x0a12, 0x0001), .driver_info = BTUSB_CSR },
-
 	/* Broadcom BCM2033 without firmware */
 	{ USB_DEVICE(0x0a5c, 0x2033), .driver_info = BTUSB_IGNORE },
 
@@ -149,10 +155,6 @@ static struct usb_device_id blacklist_table[] = {
 	{ USB_DEVICE(0x0a5c, 0x2035), .driver_info = BTUSB_WRONG_SCO_MTU },
 	{ USB_DEVICE(0x0a5c, 0x200a), .driver_info = BTUSB_WRONG_SCO_MTU },
 	{ USB_DEVICE(0x0a5c, 0x2009), .driver_info = BTUSB_BCM92035 },
-
-	/* Broadcom BCM2045 */
-	{ USB_DEVICE(0x0a5c, 0x2039), .driver_info = BTUSB_WRONG_SCO_MTU },
-	{ USB_DEVICE(0x0a5c, 0x2101), .driver_info = BTUSB_WRONG_SCO_MTU },
 
 	/* IBM/Lenovo ThinkPad with Broadcom chip */
 	{ USB_DEVICE(0x0a5c, 0x201e), .driver_info = BTUSB_WRONG_SCO_MTU },

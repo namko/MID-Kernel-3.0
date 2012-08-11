@@ -335,6 +335,9 @@ config SND_SOC_WM8971
 config SND_SOC_WM8974
 	tristate
 
+config SND_SOC_WM8976
+	bool
+
 config SND_SOC_WM8978
 	tristate
 

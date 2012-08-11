@@ -64,7 +64,7 @@ config SND_SOC_SAMSUNG_JIVE_WM8750
 
 config SND_SOC_SAMSUNG_SMDK_WM8580
 	tristate "SoC I2S Audio support for WM8580 on SMDK"
-	depends on SND_SOC_SAMSUNG && (MACH_SMDK6410 || MACH_SMDKC100 || MACH_SMDK6440 || MACH_SMDK6450 || MACH_SMDKV210 || MACH_SMDKC110)
+	depends on SND_SOC_SAMSUNG && (MACH_SMDK6410 || MACH_SMDKC100 || MACH_SMDK6440 || MACH_SMDK6450 || MACH_MID || MACH_SMDKV210 || MACH_SMDKC110)
 	select SND_SOC_WM8580
 	select SND_SAMSUNG_I2S
 	help
@@ -145,6 +145,15 @@ config SND_SOC_SAMSUNG_HERRING_WM8994
 	  Say Y if you want to add support for SoC audio on herring
 	  with the WM8994.
 
+config SND_SOC_SAMSUNG_MID_WM8976
+	bool "SoC I2S Audio support for MID - WM8976"
+	depends on SND_SOC_SAMSUNG && (MACH_MID)
+	select SND_S5PC1XX_I2S
+	select SND_SOC_WM8976
+	help
+	  Say Y if you want to add support for SoC audio on MID
+	  with the WM8976.
+
 config SND_SOC_SAMSUNG_RX1950_UDA1380
 	tristate "Audio support for the HP iPAQ RX1950"
 	depends on SND_SOC_SAMSUNG && MACH_RX1950
@@ -155,7 +164,7 @@ config SND_SOC_SAMSUNG_RX1950_UDA1380
 
 config SND_SOC_SAMSUNG_SMDK_WM9713
 	tristate "SoC AC97 Audio support for SMDK with WM9713"
-	depends on SND_SOC_SAMSUNG && (MACH_SMDK6410 || MACH_SMDKC100 || MACH_SMDKV210 || MACH_SMDKC110 || MACH_SMDKV310 || MACH_SMDKC210)
+	depends on SND_SOC_SAMSUNG && (MACH_SMDK6410 || MACH_SMDKC100 || MACH_MID || MACH_SMDKV210 || MACH_SMDKC110 || MACH_SMDKV310 || MACH_SMDKC210)
 	select SND_SOC_WM9713
 	select SND_SAMSUNG_AC97
 	help
@@ -178,14 +187,14 @@ config SND_SOC_GONI_AQUILA_WM8994
 
 config SND_SOC_SAMSUNG_SMDK_SPDIF
 	tristate "SoC S/PDIF Audio support for SMDK"
-	depends on SND_SOC_SAMSUNG && (MACH_SMDKC100 || MACH_SMDKC110 || MACH_SMDKV210)
+	depends on SND_SOC_SAMSUNG && (MACH_SMDKC100 || MACH_SMDKC110 || MACH_SMDKV210 || MACH_MID)
 	select SND_SAMSUNG_SPDIF
 	help
 	  Say Y if you want to add support for SoC S/PDIF audio on the SMDK.
 
 config SND_SOC_SMDK_WM8580_PCM
 	tristate "SoC PCM Audio support for WM8580 on SMDK"
-	depends on SND_SOC_SAMSUNG && (MACH_SMDK6450 || MACH_SMDKV210 || MACH_SMDKC110)
+	depends on SND_SOC_SAMSUNG && (MACH_SMDK6450 || MACH_MID || MACH_SMDKV210 || MACH_SMDKC110)
 	select SND_SOC_WM8580
 	select SND_SAMSUNG_PCM
 	help

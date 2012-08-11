@@ -36,12 +36,12 @@ void s3c_fimc0_cfg_gpio(struct platform_device *pdev)
 		s3c_gpio_setpull(S5PV210_GPE0(i), S3C_GPIO_PULL_NONE);
 	}
 	/* CAM A port(b0010) : DATA[5-7], CLKOUT(MIPI CAM also), FIELD */
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 5; i++) {       // namko: Fixed (apparently a) typo
 		s3c_gpio_cfgpin(S5PV210_GPE1(i), S3C_GPIO_SFN(2));
 		s3c_gpio_setpull(S5PV210_GPE1(i), S3C_GPIO_PULL_NONE);
 	}
 
-#if defined(CONFIG_MACH_SMDKC110) || defined(CONFIG_MACH_SMDKV210)
+#if defined(CONFIG_MACH_SMDKC110) || defined(CONFIG_MACH_SMDKV210) || defined(CONFIG_MACH_MID)
 	s3c_gpio_cfgpin(S5PV210_GPE1(4), S5PV210_GPE1_4_CAM_A_FIELD);
 	s3c_gpio_setpull(S5PV210_GPE1(4), S3C_GPIO_PULL_NONE);
 

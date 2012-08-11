@@ -51,7 +51,7 @@ static u8 test_pkt[TEST_PKT_SIZE] __attribute__((aligned(8))) = {
 
 void s3c_udc_ep_set_stall(struct s3c_ep *ep);
 
-#if defined(CONFIG_MACH_SMDKC110) || defined(CONFIG_MACH_SMDKV210)
+#if defined(CONFIG_MACH_SMDKC110) || defined(CONFIG_MACH_SMDKV210) || defined(CONFIG_MACH_MID)
 extern void s3c_cable_check_status(int flag);
 
 void s3c_udc_cable_connect(struct s3c_udc *dev)
@@ -463,7 +463,7 @@ static irqreturn_t s3c_udc_irq(int irq, void *_dev)
 			dev->driver->disconnect(&dev->gadget);
 			spin_lock(&dev->lock);
 		}
-#if defined(CONFIG_MACH_SMDKC110) || defined(CONFIG_MACH_SMDKV210)
+#if defined(CONFIG_MACH_SMDKC110) || defined(CONFIG_MACH_SMDKV210) || defined(CONFIG_MACH_MID)
 		s3c_udc_cable_disconnect(dev);
 #endif
 	}
@@ -1271,7 +1271,7 @@ static void s3c_ep0_setup(struct s3c_udc *dev)
 			dev->req_config = 1;
 		}
 
-#if defined(CONFIG_MACH_SMDKC110) || defined(CONFIG_MACH_SMDKV210)
+#if defined(CONFIG_MACH_SMDKC110) || defined(CONFIG_MACH_SMDKV210) || defined(CONFIG_MACH_MID)
 		s3c_udc_cable_connect(dev);
 #endif
 		break;

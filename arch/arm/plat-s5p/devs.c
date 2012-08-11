@@ -128,7 +128,7 @@ struct platform_device s5p_device_rtc = {
 	.num_resources    = ARRAY_SIZE(s5p_rtc_resource),
 	.resource         = s5p_rtc_resource,
 };
-#if 0
+
 #ifdef CONFIG_S5P_ADC
 /* ADCTS */
 static struct resource s3c_adc_resource[] = {
@@ -169,7 +169,6 @@ void __init s3c_adc_set_platdata(struct s3c_adc_mach_info *pd)
 	}
 }
 #endif /* CONFIG_S5P_ADC */
-#endif
 
 #if defined(CONFIG_VIDEO_MFC51) || defined(CONFIG_VIDEO_MFC50)
 static struct resource s5p_mfc_resources[] = {

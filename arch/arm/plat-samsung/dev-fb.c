@@ -180,15 +180,12 @@ void __init s3c_fb_set_platdata(struct s3c_platform_fb *pd)
                 frame_size = (lcd->width * lcd->height * 4);
 
                 s3cfb_get_clk_name(npd->clk_name);
-                npd->backlight_onoff = NULL;
                 npd->clk_on = s3cfb_clk_on;
                 npd->clk_off = s3cfb_clk_off;
 
                 /* set starting physical address & size of memory region for overlay
- *                  * window */
-		printk("pmem_start is 0x%x\n",pmem_start);
+                 * window */
                 pmem_start = s5p_get_media_memory_bank(S5P_MDEV_FIMD, 1);
-		printk("---pmem_start is 0x%x\n",pmem_start);
                 for (i = 0; i < num_overlay_win; i++) {
                         npd->pmem_start[i] = pmem_start;
                         npd->pmem_size[i] = frame_size * npd->nr_buffers[i];
@@ -196,7 +193,7 @@ void __init s3c_fb_set_platdata(struct s3c_platform_fb *pd)
                 }
 
                 /* set starting physical address & size of memory region for default
- *                  * window */
+                 * window */
                 npd->pmem_start[default_win] = pmem_start;
                 npd->pmem_size[default_win] = frame_size * npd->nr_buffers[default_win];
 

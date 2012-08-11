@@ -109,6 +109,12 @@ void s5p_i2s_set_clk_enabled(struct snd_soc_dai *dai, bool state)
 			clk_enable(i2s->iis_clk);
 			clk_enable(i2s->iis_busclk);
 		}
+#ifdef CONFIG_MACH_MID
+		else if (dai->id == 1)
+			clk_enable(i2s->iis_ipclk);
+		else if (dai->id == 2)
+			clk_enable(i2s->iis_ipclk);
+#endif
 		audio_clk_gated = 0;
 	} else {
 		if (dai->id == 0) {	/* I2S V5.1? */
@@ -1076,6 +1082,21 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 			goto err4;
 		}
 	}
+#ifdef CONFIG_MACH_MID
+	else if (pdev->id == 1) {
+		i2s->iis_ipclk = clk_get(&pdev->dev, "iis");
+		if (IS_ERR(i2s->iis_ipclk)) {
+			dev_err(&pdev->dev, "failed to get i2s1_clock\n");
+			goto err4;
+		}
+	} else if (pdev->id == 2) {
+		i2s->iis_ipclk = clk_get(&pdev->dev, "iis");
+		if (IS_ERR(i2s->iis_ipclk)) {
+			dev_err(&pdev->dev, "failed to get i2s2_clock\n");
+			goto err4;
+		}
+	}
+#endif
 
 #if defined(CONFIG_PLAT_S5P)
 	writel(((1<<0)|(1<<31)), i2s->regs + S3C2412_IISCON);
@@ -1095,10 +1116,21 @@ static __devinit int s3c64xx_iis_dev_probe(struct platform_device *pdev)
 	if (ret != 0)
 		goto err_i2sv5;
 
-	clk_put(i2s->iis_ipclk);
-	clk_put(i2s->iis_busclk);
-	clk_put(i2s->iis_clk);
-	clk_put(mout_audss);
+	if (pdev->id == 0) {
+	    clk_put(i2s->iis_ipclk);
+	    clk_put(i2s->iis_busclk);
+	    clk_put(i2s->iis_clk);
+	    clk_put(mout_audss);
+    }
+#ifdef CONFIG_MACH_MID
+	else if (pdev->id == 1)
+	    clk_put(i2s->iis_ipclk);
+    else if (pdev->id == 2)
+	    clk_put(i2s->iis_ipclk);
+
+    clk_enable(i2s->iis_ipclk);
+#endif
+
 	clk_put(mout_epll);
 	clk_put(fout_epll);
 	return 0;

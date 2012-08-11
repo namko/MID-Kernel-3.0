@@ -87,6 +87,10 @@ obj-$(CONFIG_SOC_CAMERA_TW9910)		+= tw9910.o
 
 obj-$(CONFIG_VIDEO_S5KA3DFX) 	+= s5ka3dfx.o
 obj-$(CONFIG_VIDEO_S5K4ECGX) 	+= s5k4ecgx.o
+
+obj-$(CONFIG_VIDEO_HM2055) 	+= hm2055.o
+obj-$(CONFIG_VIDEO_GC0308) 	+= gc0308.o
+obj-$(CONFIG_VIDEO_HI704) 	+= hi704.o
 # And now the v4l2 drivers:
 
 obj-$(CONFIG_VIDEO_BT848) += bt8xx/
