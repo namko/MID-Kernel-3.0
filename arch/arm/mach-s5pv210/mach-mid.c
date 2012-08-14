@@ -1492,8 +1492,13 @@ static void __init s3c_ehci_set_platdata(struct s5p_ehci_platdata *pd) {
 }
 #endif
 
+#define S5PV210_PS_HOLD_CONTROL_REG (S3C_VA_SYS+0xE81C)
 static void mid_power_off(void) {
     int nGPIO = GPIO_MAIN_POWER;
+
+    /* PS_HOLD output High --> Low */
+    writel(readl(S5PV210_PS_HOLD_CONTROL_REG) & 0xFFFFFEFF,
+            S5PV210_PS_HOLD_CONTROL_REG);
 
     gpio_request(nGPIO, "main-power-en");
     gpio_direction_output(nGPIO, 0);
