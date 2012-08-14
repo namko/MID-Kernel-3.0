@@ -67,6 +67,11 @@ static int __devinit s5p_ehci_probe(struct platform_device *pdev)
 	int irq;
 	int err;
 
+#ifdef CONFIG_MACH_MID
+    void usb_host_phy_init(void);
+    void usb_host_phy_off(void);
+#endif
+
 	pdata = pdev->dev.platform_data;
 	if (!pdata) {
 		dev_err(&pdev->dev, "No platform data defined\n");
@@ -78,6 +83,10 @@ static int __devinit s5p_ehci_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	s5p_ehci->dev = &pdev->dev;
+
+#ifdef CONFIG_MACH_MID
+	usb_host_phy_off();
+#endif
 
 	hcd = usb_create_hcd(&s5p_ehci_hc_driver, &pdev->dev,
 					dev_name(&pdev->dev));
@@ -99,6 +108,10 @@ static int __devinit s5p_ehci_probe(struct platform_device *pdev)
 	err = clk_enable(s5p_ehci->clk);
 	if (err)
 		goto fail_clken;
+
+#ifdef CONFIG_MACH_MID
+	usb_host_phy_init();
+#endif
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res) {
@@ -131,6 +144,10 @@ static int __devinit s5p_ehci_probe(struct platform_device *pdev)
 	ehci->regs = hcd->regs +
 		HC_LENGTH(ehci, readl(&ehci->caps->hc_capbase));
 
+#ifdef CONFIG_MACH_MID
+	writel(0x000F0000, hcd->regs + 0x90);
+#endif
+
 	dbg_hcs_params(ehci, "reset");
 	dbg_hcc_params(ehci, "reset");
 
@@ -150,6 +167,9 @@ static int __devinit s5p_ehci_probe(struct platform_device *pdev)
 fail:
 	iounmap(hcd->regs);
 fail_io:
+#ifdef CONFIG_MACH_MID
+    usb_host_phy_off();
+#endif
 	clk_disable(s5p_ehci->clk);
 fail_clken:
 	clk_put(s5p_ehci->clk);
