@@ -30,6 +30,7 @@
 #include <mach/regs-clock.h>
 #include <mach/regs-fb.h>
 #include <mach/adc.h>
+#include <mach/ts-s3c.h>
 #include <mach/regs-gpio.h>
 #include <mach/gpio.h>
 #include <mach/gpio-smdkc110.h>
@@ -837,6 +838,53 @@ static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 };
 #endif
 
+static struct s3c_ts_mach_info s3c_ts_platform __initdata = {
+	.delay                  = 10000,
+	.presc                  = 49,
+	.resol_bit              = 12,
+	.oversampling_shift     = 2,
+	.s3c_adc_con            = ADC_TYPE_2,
+};
+
+/* Touch srcreen */
+static struct resource s3c_ts_resource[] = {
+	[0] = {
+		.start = SAMSUNG_PA_ADC1,
+		.end   = SAMSUNG_PA_ADC1 + SZ_4K - 1,
+		.flags = IORESOURCE_MEM,
+	},
+	[1] = {
+		.start = IRQ_PENDN1,
+		.end   = IRQ_PENDN1,
+		.flags = IORESOURCE_IRQ,
+	},
+	[2] = {
+		.start = IRQ_ADC1,
+		.end   = IRQ_ADC1,
+		.flags = IORESOURCE_IRQ,
+	}
+};
+
+struct platform_device s3c_device_ts = {
+	.name		    = "s3c-ts",
+	.id		        = -1,
+	.num_resources  = ARRAY_SIZE(s3c_ts_resource),
+	.resource	    = s3c_ts_resource,
+};
+
+void __init s3c_ts_set_platdata(struct s3c_ts_mach_info *pd)
+{
+	struct s3c_ts_mach_info *npd;
+
+	npd = kmalloc(sizeof(*npd), GFP_KERNEL);
+	if (npd) {
+		memcpy(npd, pd, sizeof(*npd));
+		s3c_device_ts.dev.platform_data = npd;
+	} else {
+		pr_err("no memory for Touchscreen platform data\n");
+	}
+}
+
 static int midcam_power_en(int onoff) {
     int err;
     unsigned int nGPIOs[] = {
@@ -1070,6 +1118,16 @@ static void __init mid_dm9000_init(void) {
 }
 #endif
 
+static struct platform_device mid_battery = {
+    .name = "mid-battery",
+    .id = -1,
+};
+
+static struct platform_device mid_button = {
+    .name = "s3c-button",
+    .id = -1,
+};
+
 static struct i2c_board_info mid_i2c_devs0[] __initdata = {
 #ifdef CONFIG_SND_SOC_WM8580
 	{
@@ -1134,16 +1192,18 @@ static void mid_detect_i2cdevs(void) {
     }
     else if (!strcmp(mid_model, "7024") || !strcmp(mid_model, "8024")) {
         // Coby 7024 and Coby 8024.
-/*
         printk("* Selecting resistive touchscreen...\n");
         if ((ret = platform_device_register(&s3c_device_ts)) != 0)
             printk("*** ERROR: cannot register resistive touchscreen (%d); "
                    "touch will not work ***\n", ret);
-*/
+
         printk("* Selecting touch buttons...\n");
         if ((ret = i2c_register_board_info(1, &i2c_ata2538, 1)) != 0)
             printk("*** ERROR: cannot register touch buttons (%d); "
                    "buttons will not work ***\n", ret);
+
+        // Use S3C fake battery driver until conflict with the touchscreen is resolved.
+        mid_battery.name = "sec-fake-battery";
     }
     else if (!strcmp(mid_model, "1024")) {
         // Coby 1024
@@ -1471,16 +1531,6 @@ static void mid_pm_restart(char mode, const char *cmd) {
 	arm_machine_restart(mode, cmd);
 }
 
-static struct platform_device mid_battery = {
-    .name = "mid-battery",
-    .id = -1,
-};
-
-static struct platform_device mid_button = {
-    .name = "s3c-button",
-    .id = -1,
-};
-
 static struct platform_device *mid_devices[] __initdata = {
 #ifdef CONFIG_FB_S3C
 	&s3c_device_fb,
@@ -1677,6 +1727,8 @@ static void __init mid_machine_init(void) {
 #ifdef CONFIG_S5P_ADC
 	s3c_adc_set_platdata(&s3c_adc_platform);
 #endif
+
+	s3c_ts_set_platdata(&s3c_ts_platform);
 
 #ifdef CONFIG_VIDEO_FIMC
     /* fimc */
