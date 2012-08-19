@@ -1571,10 +1571,8 @@ static struct platform_device *mid_devices[] __initdata = {
 
 	&s3c_device_rtc,
 	&s3c_device_wdt,
-	&s5pv210_device_ac97,
 	&s5pv210_device_iis0,
 	&s5pv210_device_iis1,
-//	&s5pv210_device_spdif,
 	&samsung_asoc_dma,
 
 #ifdef CONFIG_S3C_DEV_NAND

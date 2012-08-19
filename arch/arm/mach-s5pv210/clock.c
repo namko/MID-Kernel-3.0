@@ -565,12 +565,6 @@ static struct clk init_clocks_off[] = {
 		.enable		= s5pv210_clk_ip3_ctrl,
 		.ctrlbit	= (1 << 11),
 	}, {
-		.name		= "ac97",
-		.id		= -1,
-		.parent		= &clk_pclk_psys.clk,
-		.enable		= s5pv210_clk_ip3_ctrl,
-		.ctrlbit	= (1 << 1),
-	}, {
 		.name		= "hdmi",
 		.id		= -1,
 		.parent		= &clk_hclk_dsys.clk,
