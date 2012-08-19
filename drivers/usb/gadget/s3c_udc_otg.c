@@ -354,6 +354,9 @@ int usb_gadget_probe_driver(struct usb_gadget_driver *driver,
 		dev_dbg(&dev->gadget.dev, "%s vbus connect %d\n",
 					__func__, retval);
 
+#ifndef CONFIG_MACH_MID
+    // namko: This code causes problems if cable is connected after
+    // the device has been probed. Specifically, cable is not detected.
 	if (!(readl(S3C_UDC_OTG_GOTGCTL) & B_SESSION_VALID)) {
 		retval = usb_gadget_vbus_disconnect(&dev->gadget);
 		if (retval < 0) {
@@ -361,6 +364,7 @@ int usb_gadget_probe_driver(struct usb_gadget_driver *driver,
 					__func__, retval);
 		}
 	}
+#endif
 
 	printk(KERN_DEBUG "Registered gadget driver '%s'\n",
 			   driver->driver.name);
@@ -404,8 +408,7 @@ EXPORT_SYMBOL(usb_gadget_unregister_driver);
 static int s3c_udc_power(struct s3c_udc *dev, char en)
 {
 	pr_debug("%s : %s\n", __func__, en ? "ON" : "OFF");
-/* hcj for dbg */
-/*
+
 	if (en) {
 		regulator_enable(dev->udc_vcc_d);
 		regulator_enable(dev->udc_vcc_a);
@@ -413,7 +416,7 @@ static int s3c_udc_power(struct s3c_udc *dev, char en)
 		regulator_disable(dev->udc_vcc_d);
 		regulator_disable(dev->udc_vcc_a);
 	}
-*/
+
 	return 0;
 }
 
@@ -1388,14 +1391,14 @@ static int s3c_udc_probe(struct platform_device *pdev)
 	dev->gadget.b_hnp_enable = 0;
 	dev->gadget.a_hnp_support = 0;
 	dev->gadget.a_alt_hnp_support = 0;
-/* hcj for gdb
+
 	dev->udc_vcc_d = regulator_get(&pdev->dev, "pd_io");
 	dev->udc_vcc_a = regulator_get(&pdev->dev, "pd_core");
 	if (IS_ERR(dev->udc_vcc_d) || IS_ERR(dev->udc_vcc_a)) {
 		printk(KERN_ERR "failed to find udc vcc source\n");
 		return -ENOENT;
 	}
-*/
+
 	the_controller = dev;
 	platform_set_drvdata(pdev, dev);
 
@@ -1468,8 +1471,11 @@ static int s3c_udc_suspend(struct platform_device *pdev, pm_message_t state)
 	if (dev->driver && dev->driver->suspend)
 		dev->driver->suspend(&dev->gadget);
 
+#ifndef CONFIG_MACH_MID
+    // namko: See "usb_gadget_probe_driver()".
 	if (dev->udc_enabled)
 		usb_gadget_vbus_disconnect(&dev->gadget);
+#endif
 
 	return 0;
 }
