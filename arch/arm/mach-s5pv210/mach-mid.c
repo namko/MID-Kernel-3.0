@@ -1671,7 +1671,6 @@ static void __init mid_map_io(void) {
 	s3c24xx_init_clocks(24000000);
 	s5pv210_gpiolib_init();
 	s3c24xx_init_uarts(mid_uartcfgs, ARRAY_SIZE(mid_uartcfgs));
-	s5p_set_timer_source(S5P_PWM2, S5P_PWM4);
 	s5p_reserve_bootmem(s5pv210_media_devs, ARRAY_SIZE(s5pv210_media_devs), 0);
 }
 
@@ -1778,5 +1777,5 @@ MACHINE_START(SMDKV210, "SMDKV210")
 	.init_irq		= s5pv210_init_irq,
 	.map_io			= mid_map_io,
 	.init_machine	= mid_machine_init,
-	.timer			= &s5p_timer,
+	.timer			= &s5p_systimer,
 MACHINE_END

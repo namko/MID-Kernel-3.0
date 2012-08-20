@@ -25,9 +25,9 @@ obj-$(CONFIG_S5P_GPIO_INT)	+= irq-gpioint.o
 obj-$(CONFIG_S5P_SYSTEM_MMU)	+= sysmmu.o
 obj-$(CONFIG_PM)		+= pm.o
 obj-$(CONFIG_PM)		+= irq-pm.o
-#ifndef CONFIG_S5P_HIGH_RES_TIMERS
+ifndef CONFIG_S5P_HIGH_RES_TIMERS
 obj-$(CONFIG_S5P_HRT) 		+= s5p-time.o
-#endif
+endif
 
 # devices
 
@@ -48,11 +48,11 @@ obj-$(CONFIG_S5P_SETUP_MIPIPHY)	+= setup-mipiphy.o
 obj-$(CONFIG_PM)		+= pm.o
 obj-$(CONFIG_PM)		+= irq-pm.o
 
-#ifdef CONFIG_S5P_HIGH_RES_TIMERS
-#ifdef CONFIG_HRT_RTC
-#obj-y				+= hr-time-rtc.o
-#endif
-#endif
+ifdef CONFIG_S5P_HIGH_RES_TIMERS
+ifdef CONFIG_HRT_RTC
+obj-y				+= hr-time-rtc.o
+endif
+endif
 
 obj-$(CONFIG_S5P_DEV_MFC)	+= dev-mfc.o
 obj-$(CONFIG_S5P_SETUP_MFC)	+= setup-mfc.o
