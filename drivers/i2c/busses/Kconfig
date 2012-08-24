@@ -580,6 +580,13 @@ config I2C_S3C2410
 	  Say Y here to include support for I2C controller in the
 	  Samsung SoCs.
 
+config I2C_S3C2410_URBETTER
+	bool "S3C2410 I2C Driver (Urbetter version)"
+	depends on HAVE_S3C2410_I2C && !I2C_S3C2410
+	help
+	  Say Y here to include support for I2C controller in the
+	  Samsung SoCs (Urbetter version).
+
 config I2C_S6000
 	tristate "S6000 I2C support"
 	depends on XTENSA_VARIANT_S6000
