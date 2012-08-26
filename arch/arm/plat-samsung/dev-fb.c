@@ -178,6 +178,7 @@ void __init s3c_fb_set_platdata(struct s3c_platform_fb *pd)
 
                 lcd = (struct s3cfb_lcd *)npd->lcd;
                 frame_size = (lcd->width * lcd->height * 4);
+                frame_size = ALIGN(frame_size, PAGE_SIZE); /* namko: Page-align for odd resoulutions */
 
                 s3cfb_get_clk_name(npd->clk_name);
                 npd->clk_on = s3cfb_clk_on;
