@@ -169,26 +169,6 @@ global variables
 ***********************************************************************************************/
 static struct i2c_client   *this_client;
 
-
-
-
-/***********************************************************************************************
-Name:       u8tobinstr
-Input:      uiIn
-Output:
-function:   lil debug print helper
-***********************************************************************************************/
-char* u8tobinstr(u8 uiIn)
-{
-    const u8 uiBits=8*sizeof(u8);
-    static char szRet[uiBits +1]={0};
-    u8 uiNextBit=uiBits;
-    while (uiNextBit--)
-        szRet[(uiBits-1)-uiNextBit]=(uiIn & (1 << uiNextBit) ? '1' : '0');
-    
-    return szRet;
-}
-
 /***********************************************************************************************
 Name:       u8tobinstr 
 Input:      uiIn
