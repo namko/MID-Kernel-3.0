@@ -394,11 +394,6 @@ static int ath3k_probe(struct usb_interface *intf,
 		if (le16_to_cpu(udev->descriptor.bcdDevice) > 0x0001)
 			return -ENODEV;
 
-
-		/* New firmware with patch and sysconfig files already loaded */
-		if (le16_to_cpu(udev->descriptor.bcdDevice) > 0x0001)
-			return -ENODEV;
-
 		ret = ath3k_load_patch(udev);
 		if (ret < 0) {
 			BT_ERR("Loading patch file failed");
