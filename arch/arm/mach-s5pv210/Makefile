@@ -37,6 +37,7 @@ obj-$(CONFIG_MACH_HERRING)	+= dev-herring-phone.o
 obj-$(CONFIG_MACH_MID)		+= mach-mid.o
 obj-$(CONFIG_MACH_MID)		+= mid-cfg.o
 obj-$(CONFIG_MACH_MID)		+= mid-gpio.o
+obj-$(CONFIG_MACH_MID)		+= mid-control.o
 obj-$(CONFIG_MACH_MID)		+= smdkc110-rtc.o
 
 # device support

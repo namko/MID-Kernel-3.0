@@ -1128,6 +1128,11 @@ static struct platform_device mid_button = {
     .id = -1,
 };
 
+static struct platform_device mid_control = {
+    .name = "mid-control",
+    .id = -1,
+};
+
 static struct i2c_board_info mid_i2c_devs0[] __initdata = {
 #ifdef CONFIG_SND_SOC_WM8580
 	{
@@ -1637,6 +1642,7 @@ static struct platform_device *mid_devices[] __initdata = {
     &mid_backlight,
     &mid_battery,
     &mid_button,
+    &mid_control,
 
 #ifdef CONFIG_DM9000
 	&mid_dm9000,
