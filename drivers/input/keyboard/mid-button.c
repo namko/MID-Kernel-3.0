@@ -13,6 +13,7 @@
 #include <linux/pm.h>
 #include <linux/gpio.h>
 
+#include <mach/mid-cfg.h>
 #include <mach/gpio-mid.h>
 
 #define DEVICE_NAME                     "s3c-button"
@@ -28,7 +29,7 @@ static const unsigned int nGPIOs[BUTTON_COUNT] = {
     GPIO_KEY_VOLUME_DOWN
 };
 
-static const int nButtonCodes[BUTTON_COUNT] = {
+static int nButtonCodes[BUTTON_COUNT] = {
     KEY_BACK,
     KEY_END,
     KEY_MENU,
@@ -116,6 +117,18 @@ static int mid_button_probe(struct platform_device *pdev) {
     timer.function = mid_button_timer_handler;
     timer.expires = jiffies + msecs_to_jiffies(POLL_INTERVAL_IN_MS);
     add_timer(&timer);
+
+    // Switch HOME\BACK on Coby.
+    if (!strcmp(mid_manufacturer, "coby"))
+        for (i = 0; i < BUTTON_COUNT; i++)
+            switch (nButtonCodes[i]) {
+                case KEY_BACK:
+                    nButtonCodes[i] = KEY_HOME;
+                    break;
+                case KEY_HOME:
+                    nButtonCodes[i] = KEY_BACK;
+                    break;
+            }
 
     printk("== %s initialized! ==\n", DEVICE_NAME);
     return 0;
