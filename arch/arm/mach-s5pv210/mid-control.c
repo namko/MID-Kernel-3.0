@@ -122,7 +122,7 @@ static int mid_control_gpio_request(void) {
 
     for (i = 0; i < ARRAY_SIZE(gpio_rw_list); i++)
         if (gpio_request(gpio_rw_list[i].num, gpio_rw_list[i].name) != 0)
-            printk(KERN_WARN "%s: Coudn't request gpio 0x%02x!\n", __func__, 
+            printk(KERN_ALERT "%s: Coudn't request gpio 0x%02x!\n", __func__, 
                 gpio_rw_list[i].num);
 
     return 0;
