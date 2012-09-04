@@ -23,8 +23,6 @@
 #include <plat/regs-sdhci.h>
 #include <plat/sdhci.h>
 
-#include "herring.h"
-
 void s5pv210_setup_sdhci0_cfg_gpio(struct platform_device *dev, int width)
 {
 	unsigned int gpio;
@@ -54,17 +52,6 @@ void s5pv210_setup_sdhci0_cfg_gpio(struct platform_device *dev, int width)
 	default:
 		printk(KERN_ERR "Wrong SD/MMC bus width : %d\n", width);
 	}
-
-	if (machine_is_herring()) {
-		s3c_gpio_cfgpin(S5PV210_GPJ2(7), S3C_GPIO_OUTPUT);
-		s3c_gpio_setpull(S5PV210_GPJ2(7), S3C_GPIO_PULL_NONE);
-		gpio_set_value(S5PV210_GPJ2(7), 1);
-	}
-
-	if (machine_is_herring()) {
-		gpio_direction_output(S5PV210_GPJ2(7), 1);
-		s3c_gpio_setpull(S5PV210_GPJ2(7), S3C_GPIO_PULL_NONE);
-	}
 }
 
 void s5pv210_setup_sdhci1_cfg_gpio(struct platform_device *dev, int width)
@@ -78,11 +65,11 @@ void s5pv210_setup_sdhci1_cfg_gpio(struct platform_device *dev, int width)
 	case 4:
 		/* Set all the necessary GPIO function and pull up/down */
 		for (gpio = S5PV210_GPG1(0); gpio <= S5PV210_GPG1(6); gpio++) {
-			if (gpio != S5PV210_GPG1(2)) {
-				s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
-				s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
-			}
-			s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_2X);
+			s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
+			s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+
+			if (gpio != S5PV210_GPG1(2))
+				s3c_gpio_set_drvstrength(gpio, S3C_GPIO_DRVSTR_4X);
 		}
 		break;
 	default:
@@ -107,8 +94,6 @@ void s5pv210_setup_sdhci2_cfg_gpio(struct platform_device *dev, int width)
 	case 0:
 	case 1:
 	case 4:
-		if (machine_is_herring() && herring_is_cdma_wimax_dev())
-			break;
 		/* Set all the necessary GPIO function and pull up/down */
 		for (gpio = S5PV210_GPG2(0); gpio <= S5PV210_GPG2(6); gpio++) {
 			if (gpio != S5PV210_GPG2(2)) {
