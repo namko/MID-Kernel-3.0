@@ -59,6 +59,7 @@
 #include <asm/irq.h>
 
 #include <mach/hardware.h>
+#include <mach/adc.h>
 #include <mach/regs-adc.h>
 #include <mach/ts-s3c.h>
 #include <mach/irqs.h>
@@ -101,16 +102,17 @@ struct s3c_ts_mach_info s3c_ts_default_cfg __initdata = {
  */
 static void __iomem			*ts_base;
 static struct resource		*ts_mem;
-static struct resource		*ts_irq;
+static struct resource		*ts_irq_pendn, *ts_irq_adc;
 static struct clk			*ts_clock;
 static struct s3c_ts_info	*ts;
 
 static void touch_timer_fire(unsigned long data)
 {
 	unsigned long data0, data1;
-    bool skip = false;
 	int updown;
 	int x, y;
+
+    s3c_adc_lock();
 
 	data0 = readl(ts_base+S3C_ADCDAT0);
 	data1 = readl(ts_base+S3C_ADCDAT1);
@@ -129,9 +131,6 @@ static void touch_timer_fire(unsigned long data)
 			input_report_key(ts->dev, BTN_TOUCH, 1);
 			input_sync(ts->dev);
 		}
-
-        ts->xp_old = ts->xp;
-       	ts->yp_old = ts->yp;
 
 		ts->xp = 0;
 		ts->yp = 0;
@@ -152,6 +151,8 @@ static void touch_timer_fire(unsigned long data)
 
 		writel(WAIT4INT(0), ts_base+S3C_ADCTSC);
 	}
+
+    s3c_adc_unlock();
 }
 
 static struct timer_list touch_timer =
@@ -242,10 +243,6 @@ static struct s3c_ts_mach_info *s3c_ts_get_platdata(struct device *dev)
 	return &s3c_ts_default_cfg;
 }
 
-static volatile unsigned int *g_adc_base = NULL;
-#define TOUCH_SCREEN1 0x1
-#define TSSEL 17
-
 /*
  * The functions for inserting/removing us as a module.
  */
@@ -257,7 +254,6 @@ static int __init s3c_ts_probe(struct platform_device *pdev)
 	struct s3c_ts_mach_info *s3c_ts_cfg;
 	int ret, size;
 	int irq_flags = 0;
-   	int err;
 
 	dev = &pdev->dev;
 
@@ -290,12 +286,6 @@ static int __init s3c_ts_probe(struct platform_device *pdev)
 	}
 
 	clk_enable(ts_clock);
-
-	g_adc_base = ioremap(0xE1700000, 4);
-	printk("1adccon0=%#x\n", readl(g_adc_base));
-
-	writel(readl(g_adc_base) | (TOUCH_SCREEN1 << TSSEL) , g_adc_base);
-	printk("2adccon0=%#x\n", readl(g_adc_base));
 
 	s3c_ts_cfg = s3c_ts_get_platdata(&pdev->dev);
 	if ((s3c_ts_cfg->presc & 0xff) > 0)
@@ -363,45 +353,43 @@ static int __init s3c_ts_probe(struct platform_device *pdev)
 	ts->resol_bit = s3c_ts_cfg->resol_bit;
 	ts->s3c_adc_con = s3c_ts_cfg->s3c_adc_con;
 
-#if TS_ANDROID_PM_ON
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	ts->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
 	ts->early_suspend.suspend = ts_early_suspend;
 	ts->early_suspend.resume = ts_late_resume;
 	register_early_suspend(&ts->early_suspend);
 #endif /* CONFIG_HAS_EARLYSUSPEND */
-#endif /* TS_ANDROID_PM_ON */
 
 	/* For IRQ_PENDUP */
-	ts_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (ts_irq == NULL) {
+	ts_irq_pendn = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (ts_irq_pendn == NULL) {
 		dev_err(dev, "no irq resource specified\n");
 		ret = -ENOENT;
-		goto err_irq;
+		goto err_irq_pendn;
 	}
 
-	ret = request_irq(ts_irq->start, stylus_updown, irq_flags,
+	ret = request_irq(ts_irq_pendn->start, stylus_updown, irq_flags,
 			"s3c_updown", ts);
 	if (ret != 0) {
 		dev_err(dev, "s3c_ts.c: Could not allocate ts IRQ_PENDN !\n");
 		ret = -EIO;
-		goto err_irq;
+		goto err_irq_pendn;
 	}
 
 	/* For IRQ_ADC */
-	ts_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 1);
-	if (ts_irq == NULL) {
+	ts_irq_adc = platform_get_resource(pdev, IORESOURCE_IRQ, 1);
+	if (ts_irq_adc == NULL) {
 		dev_err(dev, "no irq resource specified\n");
 		ret = -ENOENT;
-		goto err_irq;
+		goto err_irq_adc;
 	}
 
-	ret = request_irq(ts_irq->start, stylus_action, irq_flags,
+	ret = request_irq(ts_irq_adc->start, stylus_action, irq_flags,
 			"s3c_action", ts);
 	if (ret != 0) {
 		dev_err(dev, "s3c_ts.c: Could not allocate ts IRQ_ADC !\n");
 		ret =  -EIO;
-		goto err_irq;
+		goto err_irq_adc;
 	}
 
 	printk(KERN_INFO "%s got loaded successfully : %d bits\n",
@@ -418,10 +406,12 @@ static int __init s3c_ts_probe(struct platform_device *pdev)
 	return 0;
 
 fail:
-	free_irq(ts_irq->start, ts->dev);
-	free_irq(ts_irq->end, ts->dev);
+	free_irq(ts_irq_adc->start, ts->dev);
 
-err_irq:
+err_irq_adc:
+	free_irq(ts_irq_pendn->start, ts->dev);
+
+err_irq_pendn:
 	input_free_device(input_dev);
 	kfree(ts);
 
@@ -444,11 +434,11 @@ static int s3c_ts_remove(struct platform_device *dev)
 {
 	printk(KERN_INFO "s3c_ts_remove() of TS called !\n");
 
-	disable_irq(IRQ_ADC);
-	disable_irq(IRQ_PENDN);
+	disable_irq(ts_irq_adc->start);
+	disable_irq(ts_irq_pendn->start);
 
-	free_irq(IRQ_PENDN, ts->dev);
-	free_irq(IRQ_ADC, ts->dev);
+	free_irq(ts_irq_adc->start, ts->dev);
+	free_irq(ts_irq_pendn->start, ts->dev);
 
 	if (ts_clock) {
 		clk_disable(ts_clock);
@@ -456,11 +446,9 @@ static int s3c_ts_remove(struct platform_device *dev)
 		ts_clock = NULL;
 	}
 
-#if TS_ANDROID_PM_ON
 #ifdef CONFIG_HAS_EARLYSUSPEND
      unregister_early_suspend(&ts->early_suspend);
 #endif /* CONFIG_HAS_EARLYSUSPEND */
-#endif /* TS_ANDROID_PM_ON */
 
 	input_unregister_device(ts->dev);
 	iounmap(ts_base);
@@ -477,8 +465,8 @@ static int s3c_ts_suspend(struct platform_device *dev, pm_message_t state)
 	adctsc = readl(ts_base+S3C_ADCTSC);
 	adcdly = readl(ts_base+S3C_ADCDLY);
 
-	disable_irq(IRQ_ADC);
-	disable_irq(IRQ_PENDN);
+	disable_irq(ts_irq_adc->start);
+	disable_irq(ts_irq_pendn->start);
 
 	clk_disable(ts_clock);
 
@@ -494,8 +482,8 @@ static int s3c_ts_resume(struct platform_device *pdev)
 	writel(adcdly, ts_base+S3C_ADCDLY);
 	writel(WAIT4INT(0), ts_base+S3C_ADCTSC);
 
-	enable_irq(IRQ_ADC);
-	enable_irq(IRQ_PENDN);
+	enable_irq(ts_irq_adc->start);
+	enable_irq(ts_irq_pendn->start);
 
 	return 0;
 }

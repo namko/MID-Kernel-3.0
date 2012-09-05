@@ -61,38 +61,38 @@
 #include <mach/adc.h>
 #include <mach/irqs.h>
 
+#define TSSEL_BIT (1 << 17)
+
 #define ADC_MINOR	131
 #define ADC_INPUT_PIN	_IOW('S', 0x0c, unsigned long)
 
-// namko: For now, assumed no resistive touchscreen.
-//#define ADC_WITH_TOUCHSCREEN
-
 static struct clk	*adc_clock;
-
+static struct resource	*adc_mem;
 static void __iomem	*base_addr;
 static int adc_port;
 struct s3c_adc_mach_info *plat_data;
 
-#ifdef ADC_WITH_TOUCHSCREEN
 static DEFINE_MUTEX(adc_mutex);
 
-static unsigned long data_for_ADCCON;
-static unsigned long data_for_ADCTSC;
+void s3c_adc_lock(void) {
+	mutex_lock(&adc_mutex);
+}
+
+void s3c_adc_unlock(void) {
+	mutex_unlock(&adc_mutex);
+}
 
 static void s3c_adc_save_SFR_on_ADC(void)
 {
-	data_for_ADCCON = readl(base_addr + S3C_ADCCON);
-	data_for_ADCTSC = readl(base_addr + S3C_ADCTSC);
+	writel(readl(base_addr + S3C_ADCCON) & ~TSSEL_BIT,
+		base_addr + S3C_ADCCON);
 }
 
 static void s3c_adc_restore_SFR_on_ADC(void)
 {
-	writel(data_for_ADCCON, base_addr + S3C_ADCCON);
-	writel(data_for_ADCTSC, base_addr + S3C_ADCTSC);
+	writel(readl(base_addr + S3C_ADCCON) | TSSEL_BIT,
+		base_addr + S3C_ADCCON);
 }
-#else
-static struct resource	*adc_mem;
-#endif
 
 static int s3c_adc_open(struct inode *inode, struct file *file)
 {
@@ -138,22 +138,14 @@ int s3c_adc_get_adc_data(int channel)
 	int adc_value = 0;
 	int cur_adc_port = 0;
 
-#ifdef ADC_WITH_TOUCHSCREEN
 	mutex_lock(&adc_mutex);
-	s3c_adc_save_SFR_on_ADC();
-#endif
-
-	cur_adc_port = adc_port;
-	adc_port = channel;
-
-	adc_value = s3c_adc_convert();
-
-	adc_port = cur_adc_port;
-
-#ifdef ADC_WITH_TOUCHSCREEN
-	s3c_adc_restore_SFR_on_ADC();
+		s3c_adc_save_SFR_on_ADC();
+		cur_adc_port = adc_port;
+		adc_port = channel;
+		adc_value = s3c_adc_convert();
+		adc_port = cur_adc_port;
+		s3c_adc_restore_SFR_on_ADC();
 	mutex_unlock(&adc_mutex);
-#endif
 
 	pr_debug("%s : Converted Value: %03d\n", __func__, adc_value);
 
@@ -180,17 +172,12 @@ s3c_adc_read(struct file *file, char __user *buffer,
 {
 	int  adc_value = 0;
 
-#ifdef ADC_WITH_TOUCHSCREEN
 	mutex_lock(&adc_mutex);
-	s3c_adc_save_SFR_on_ADC();
-#endif
-	printk(KERN_INFO "## delay: %d\n", readl(base_addr + S3C_ADCDLY));
-	adc_value = s3c_adc_convert();
-
-#ifdef ADC_WITH_TOUCHSCREEN
-	s3c_adc_restore_SFR_on_ADC();
+		s3c_adc_save_SFR_on_ADC();
+		printk(KERN_INFO "## delay: %d\n", readl(base_addr + S3C_ADCDLY));
+		adc_value = s3c_adc_convert();
+		s3c_adc_restore_SFR_on_ADC();
 	mutex_unlock(&adc_mutex);
-#endif
 
 	if (copy_to_user(buffer, &adc_value, sizeof(unsigned int)))
 		return -EFAULT;
@@ -260,14 +247,12 @@ static int __devinit s3c_adc_probe(struct platform_device *pdev)
 
 	size = (res->end - res->start) + 1;
 
-#if !defined(ADC_WITH_TOUCHSCREEN)
 	adc_mem = request_mem_region(res->start, size, pdev->name);
 	if (adc_mem == NULL) {
 		dev_err(dev, "failed to get memory region\n");
 		ret = -ENOENT;
 		goto err_req;
 	}
-#endif
 
 	base_addr = ioremap(res->start, size);
 	if (base_addr ==  NULL) {
@@ -307,6 +292,8 @@ static int __devinit s3c_adc_probe(struct platform_device *pdev)
 	writel((readl(base_addr + S3C_ADCCON) | S3C_ADCCON_STDBM) & ~S3C_ADCCON_PRSCEN,
 		base_addr + S3C_ADCCON);
 
+    s3c_adc_restore_SFR_on_ADC();
+
 	ret = misc_register(&s3c_adc_miscdev);
 	if (ret) {
 		printk(KERN_ERR "cannot register miscdev on minor=%d (%d)\n",
@@ -323,11 +310,9 @@ err_clk:
 err_map:
 	iounmap(base_addr);
 
-#if !defined(ADC_WITH_TOUCHSCREEN)
 err_req:
 	release_resource(adc_mem);
 	kfree(adc_mem);
-#endif
 
 	return ret;
 }
