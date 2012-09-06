@@ -290,11 +290,10 @@ static int ft5406_read_data(void)
     struct ts_event *event = &data->event;
     u8 buf[32] = {0};
     int ret = -1;
-    bool bSane=0;
+    bool bAltFmt=false;
 
-    /*voodoos say we read 26 bytes of five-point touch data from register 0xF9*/
     buf[0]=0xF9;
-    ret = ft5406_i2c_rxdata(buf, 26);
+    ret = ft5406_i2c_rxdata(buf, 31);
     if (ret < 0)
     {
         dev_err(&this_client->dev, "%s read_data i2c_rxdata failed: %d\n", __func__, ret);
@@ -306,16 +305,13 @@ static int ft5406_read_data(void)
     memset(event, 0, sizeof(struct ts_event));
 
     /*check msg header && msg length are as expected*/
-    bSane=(buf[0] & 0xAA) && (buf[1] & 0xAA) && (buf[2] & 0x1A);
-    if (!bSane)
-    {
-        dev_err(&this_client->dev, "ft5406_read_data: insane touch data ~not *dog\n");
-        ft5406_ts_release();
-        return 1;
-    }
+    bAltFmt = (buf[1] != 0xAA || buf[2] != 0x1A);
 
-    /*read byte03 & count the number of touch points ctd in this msg*/
-    event->touch_point = buf[3] & 0xF;
+    /*count the number of touch points ctd in this msg*/
+    if (!bAltFmt)
+        event->touch_point = buf[3] & 0xF;
+    else
+        event->touch_point = buf[2] & 0x7;
 
     if (event->touch_point == 0)
     {
@@ -327,20 +323,45 @@ static int ft5406_read_data(void)
     switch (event->touch_point)
     {
         case 5:
-            event->x5 = (s16)(buf[21] & 0x0F)<<8 | (s16)buf[22];
-            event->y5 = (s16)(buf[23] & 0x0F)<<8 | (s16)buf[24];
+            if (!bAltFmt) {
+                event->x5 = (s16)(buf[21] & 0x0F)<<8 | (s16)buf[22];
+                event->y5 = (s16)(buf[23] & 0x0F)<<8 | (s16)buf[24];
+            } else {
+                event->x5 = (s16)(buf[0x1b] & 0x0F)<<8 | (s16)buf[0x1c];
+                event->y5 = (s16)(buf[0x1d] & 0x0F)<<8 | (s16)buf[0x1e];
+            }
         case 4:
-            event->x4 = (s16)(buf[17] & 0x0F)<<8 | (s16)buf[18];
-            event->y4 = (s16)(buf[19] & 0x0F)<<8 | (s16)buf[20];
+            if (!bAltFmt) {
+                event->x4 = (s16)(buf[17] & 0x0F)<<8 | (s16)buf[18];
+                event->y4 = (s16)(buf[19] & 0x0F)<<8 | (s16)buf[20];
+            } else {
+                event->x4 = (s16)(buf[0x15] & 0x0F)<<8 | (s16)buf[0x16];
+                event->y4 = (s16)(buf[0x17] & 0x0F)<<8 | (s16)buf[0x18];
+            }
         case 3:
-            event->x3 = (s16)(buf[13] & 0x0F)<<8 | (s16)buf[14];
-            event->y3 = (s16)(buf[15] & 0x0F)<<8 | (s16)buf[16];
+            if (!bAltFmt) {
+                event->x3 = (s16)(buf[13] & 0x0F)<<8 | (s16)buf[14];
+                event->y3 = (s16)(buf[15] & 0x0F)<<8 | (s16)buf[16];
+            } else {
+                event->x3 = (s16)(buf[0x0f] & 0x0F)<<8 | (s16)buf[0x10];
+                event->y3 = (s16)(buf[0x11] & 0x0F)<<8 | (s16)buf[0x12];
+            }
         case 2:
-            event->x2 = (s16)(buf[9] & 0x0F)<<8 | (s16)buf[10];
-            event->y2 = (s16)(buf[11] & 0x0F)<<8 | (s16)buf[12];
+            if (!bAltFmt) {
+                event->x2 = (s16)(buf[9] & 0x0F)<<8 | (s16)buf[10];
+                event->y2 = (s16)(buf[11] & 0x0F)<<8 | (s16)buf[12];
+            } else {
+                event->x2 = (s16)(buf[9] & 0x0F)<<8 | (s16)buf[10];
+                event->y2 = (s16)(buf[11] & 0x0F)<<8 | (s16)buf[12];
+            }
         case 1:
-            event->x1 = (s16)(buf[5] & 0x0F)<<8 | (s16)buf[6];
-            event->y1 = (s16)(buf[7] & 0x0F)<<8 | (s16)buf[8];
+            if (!bAltFmt) {
+                event->x1 = (s16)(buf[5] & 0x0F)<<8 | (s16)buf[6];
+                event->y1 = (s16)(buf[7] & 0x0F)<<8 | (s16)buf[8];
+            } else {
+                event->x1 = (s16)(buf[3] & 0x0F)<<8 | (s16)buf[4];
+                event->y1 = (s16)(buf[5] & 0x0F)<<8 | (s16)buf[6];
+            }
             break;
         default:
             return -1;
