@@ -40,8 +40,13 @@ static int pwm_backlight_update_status(struct backlight_device *bl)
 	if (bl->props.power != FB_BLANK_UNBLANK)
 		brightness = 0;
 
+#ifndef CONFIG_MACH_MID
+    // namko: Fix for the issue where, after video decoding stops
+    // the screen backlight turns off. This is done in the Urbetter
+    // UTV210 2.6.35.7 kernel as well.
 	if (bl->props.fb_blank != FB_BLANK_UNBLANK)
 		brightness = 0;
+#endif
 
 	if (pb->notify)
 		brightness = pb->notify(pb->dev, brightness);
