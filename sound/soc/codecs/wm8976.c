@@ -585,7 +585,6 @@ static int wm8976_probe(struct snd_soc_codec *codec)
 	ret = snd_soc_write(codec, WM8976_RESET, 0);
 	if (ret < 0) {
 		dev_err(codec->dev, "Failed to issue reset\n");
-		return ret;
 	}
 
 	wm8976_set_bias_level(codec, SND_SOC_BIAS_PREPARE);
