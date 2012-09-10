@@ -1071,7 +1071,7 @@ static struct s3c_platform_fimc fimc_plat_lsi = {
 };
 
 static void mid_detect_camera(void) {
-    if (!strcmp(mid_camera, "hm2055")) {
+    if (!strcmp(mid_camera, "hm2055") || !strcmp(mid_camera, "ut2055")) {
         // Himax HM2055
         printk("* Selecting 2MP camera...\n");
         fimc_plat_lsi.camera[0] = &cam_hm2055;
